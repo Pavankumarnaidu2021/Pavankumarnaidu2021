@@ -1,0 +1,91 @@
+/*
+package com.nuvelink.awssqsclient.awsasync;
+
+import com.amazon.sqs.javamessaging.*;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
+import com.nuvelink.awssqsclient.listners.MyQueueListner;
+import com.nuvelink.awssqsclient.models.JSONData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.jms.*;
+@Component
+
+public class SQSAsync {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(SQSAsync.class);
+
+
+    @Value("${cloud.aws.credentials.access-key}")
+    private String awsAccessKey;
+
+    @Value("${cloud.aws.credentials.secret-key}")
+    private String awsSecretKey;
+
+    public void runAsyncQueueDemo(JSONData data, String sourceQueue) throws JMSException, InterruptedException {
+
+        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(new ProviderConfiguration(),
+                AmazonSQSAsyncClientBuilder.standard().withRegion(Regions.US_EAST_2)
+                .withCredentials(new AWSStaticCredentialsProvider
+                        (new BasicAWSCredentials(awsAccessKey, awsSecretKey)))
+                .build());
+
+        SQSConnection connection = connectionFactory.createConnection();
+        AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+        Session session = connection.createSession(false, SQSSession.CLIENT_ACKNOWLEDGE);
+        Queue queue = session.createQueue(sourceQueue);
+       MessageProducer producer = session.createProducer(queue);
+        ObjectMessage message = session.createObjectMessage(data);
+
+        //Send the Message
+        producer.send(message);
+        LOGGER.info("JMS Message ID:", message.getStringProperty("messageID"));
+
+        MessageConsumer consumer = session.createConsumer(queue);
+        connection.start();
+        Message receivedMessage = consumer.receive(1000);
+
+        // Cast the received message as TextMessage and display the text
+        if (receivedMessage != null) {
+            LOGGER.info("Revived Message:"+((ObjectMessage) receivedMessage).getObject().toString());
+            receivedMessage.acknowledge();
+        }
+        connection.stop();
+
+    }
+}
+*/
+
+package com.nuvelink.awssqsclient.listners;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jms.*;
+
+public class MyQueueListner implements MessageListener {
+
+    Logger LOGGER = LoggerFactory.getLogger(MyQueueListner.class);
+
+    @Override
+    public void onMessage(Message message) {
+        try {
+            LOGGER.info("Revived Message:"+((ObjectMessage) message).getObject().toString());
+            message.acknowledge();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+logging.level.root=info
+logging.level.org.springframework.cloud.aws.messaging=debug
+
+
+IntelliJ Experiration URL:
+https://gist.github.com/shahadul878/5f33b90e55c1655aee05fa239ec1b978
